@@ -1,0 +1,462 @@
+---
+title: "STAD37"
+author: "Richard Zhen"
+date: 'Due: November 23, 2021, 11:00pm'
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r}
+library("tidyverse")
+library("readr")
+library("dplyr")
+```
+
+## 1(a)
+```{r}
+# Reads the data from "a3_profile_data.txt" and sets it to the variable plasma
+plasma <- read.table("a3_profile_data.txt", header = T)
+# Displays the data frame
+plasma
+# Creates two different subsets for group 1 and group 2
+plasmag1 <- subset(plasma, Group == 1, select = c(x1,x2,x3))
+plasmag2 <- subset(plasma, Group == 2, select = c(x1,x2,x3))
+# Displays up to the first six entries of both group 1 and group 2
+head(plasmag1)
+head(plasmag2)
+```
+
+
+```{r}
+# Set the values of the rows and columns and displays them
+p <- ncol(plasmag1)
+p
+n1 <- nrow(plasmag1)
+n1
+n2 <- nrow(plasmag2)
+n2
+# Calculates the column means of Group 1 and Group 2 and displays them
+xbar1 <- colMeans(plasmag1)
+xbar1
+xbar2 <- colMeans(plasmag2)
+xbar2
+```
+
+```{r}
+# Plots and displays the profile graph and a line for Group 1
+variable <- c(1,2,3)
+plot(variable,xbar1,col = "red",ylab = "Mean Score" , axes = FALSE, type = "l", ylim = range(c(95,145)))
+# Adjust the x-axis of the graph
+axis(side = 1, at = variable)
+# Adjust the y-axis of the graph
+axis(side = 2)
+# Creates a line for Graph 2
+lines(variable,xbar2,col="blue")
+```
+
+What I have noticed in the plot is that the slopes of the lines are parallel to each other, the mean scores of Group 1 are greater than Group 2 mean scores, and that the lines/profiles are not overlaping/coincidient. 
+
+
+## 1(b)
+Testing for parallel profiles
+```{r}
+# Calculates the variance-covariance of Group 1 and Group 2 
+S1 <- cov(plasmag1)
+S2 <- cov(plasmag2)
+# Display the variance-covariance of Group 1, Group 2, and pooled
+S1
+S2
+Sp <- (1/(n1+n2-2))*((n1-1)*S1+(n2-1)*S2)
+Sp
+```
+
+```{r}
+# Creates the contrast matrix 
+C<-matrix(c(-1,1,0,0,-1,1),byrow=TRUE,p-1,p)
+# Displays the contrast matrix
+C
+C%*%(xbar1-xbar2)
+```
+
+```{r}
+# Sets to 90% confidence
+alpha <- 0.05
+# Calculates the Hotelling T^2 value for parallel
+T_sq_parallel <- ((1/n1+1/n2)^(-1))*t(xbar1-
+xbar2)%*%t(C)%*%solve(C%*%Sp%*%t(C))%*%C%*%(xbar1-xbar2)
+# Displays the Hotelling T^2 value
+T_sq_parallel
+# Calculates the critcal value for parallel profiles
+CritValue_parallel <- (((n1+n2-2)*(p-1))/(n1+n2-p))*qf(1-alpha, p-1, n1+n2-p)
+# Displays the critcal value for parallel profiles
+CritValue_parallel
+```
+For H_{01}: C{mu1} = C{mu2}, the critical value is greater than the T^2 value, we do not reject H01
+
+Testing for coincident profiles
+```{r}
+# creates a column matrix of ones in the entries
+one <- as.matrix(c(rep(1,p)))
+# Displays the one matrix
+one
+# Calculates the Hotelling T^2 value for coincident
+T_sq_coincident <- ((t(one)%*%(xbar1- xbar2))/sqrt((1/n1+1/n2)*(t(one)%*%Sp%*%one)))^2
+# Displays the Hotelling T^2 value for coincident
+T_sq_coincident
+# Calulates the critical value for coincident
+CritValue_coincident <- qf(1-alpha, 1, n1+n2-2)
+# Displays the critical value for coincident
+CritValue_coincident
+```
+For H_{02}: 1'(mu1 - mu2), the critical value is less than than the T^2 value, we do reject H02
+
+
+Therefore, the profiles are parallel but not coincident then we do not need to test if the profiles are levelled.
+
+## 2(a)
+
+```{r}
+# Read the data from "1waymanova.txt" and sets it to the variable fish
+fish <- read.table("1waymanova.txt", header = T)
+# Displays the data 
+fish
+```
+
+```{r}
+# Displays the sample means of each method
+aggregate(fish[, 1:4], list(fish$Method), mean)
+```
+
+## 2(b)
+
+```{r}
+#Creates subsets for each method
+f1 <- subset(fish, Method==1)
+f2 <- subset(fish, Method==2)
+f3 <- subset(fish, Method==3)
+# Sets the value of each row of the methods and displays them
+n1 <- nrow(f1)
+n2 <- nrow(f2)
+n3 <- nrow(f3)
+n <- n1+n2+n3
+n1
+n2
+n3
+n
+```
+
+```{r}
+# Variance-covariance matrix for method 1
+S1 <- cov(f1[,1:4])
+# Displays variance-covariance matrix for method 1
+S1
+```
+
+```{r}
+# Variance-covariance matrix for method 2
+S2 <- cov(f2[,1:4])
+# Displays variance-covariance matrix for method 2
+S2
+```
+
+```{r}
+# Variance-covariance matrix for method 3
+S3 <- cov(f3[,1:4])
+# Displays variance-covariance matrix for method 3
+S3
+```
+
+
+## 2(c)
+
+```{r}
+# Calculates sum of squares and cross products matrix W
+W <- (n1-1)*S1+(n2-1)*S2+(n3-1)*S3
+# Displays W
+W
+```
+
+## 2(d)
+
+```{r}
+# Total SS
+T <- (n-1)*cov(fish[,1:4])
+# Displays Total SS
+T
+# Calculates sum of squares and cross products, B
+B <- T-W
+# Displays B
+B
+```
+
+
+## 2(e)
+
+```{r}
+# Lambda value
+lambda <- det(W)/(det(B+W))
+lambda
+```
+
+```{r}
+# Populations
+g <- 3 
+# Varibles
+p <- 4 
+# Squaroots lambda value
+lambda.sqrt <- sqrt(lambda)
+# Calculates and displays test statistic
+TestStat <- ((n-p-2)/(p))*((1-lambda.sqrt)/lambda.sqrt)
+TestStat
+# Calculates and displays critical value
+CritValue <- qf(1-0.05, 2*p, 2*(n-p-2))
+CritValue
+```
+For H0: mu1 = mu2 = mu3, the critical value is less than the test statistic, we do reject H0.
+
+## 2(f)
+
+```{r}
+# Calculates and displays test statistic
+TestStat <- -(n-1-((p+g)/2))*log(lambda)
+TestStat
+# Calculates and displays critical value
+CritValue <- qchisq(p=1-0.05,df=p*(g-1))
+CritValue
+```
+For H0: mu1 = mu2 = mu3, the critical value is less than the test statistic, we do reject H0.
+
+## 3(a)
+
+```{r}
+# Read the data from "2sample_data.txt" and sets it to the variable skull
+skull <- read.table("2sample_data.txt", header = T)
+# Displays the data
+skull
+```
+
+```{r}
+# Displays the sample means of each period
+aggregate(skull[,1:4], list(skull$Period), mean)
+```
+
+## 3(b)
+
+```{r}
+#Creates subsets for each period
+k1 <- subset(skull, Period==1)
+k2 <- subset(skull, Period==2)
+# Sets the value of each row of the periods and displays them
+n1 <- nrow(f1)
+n2 <- nrow(f2)
+n3 <- nrow(f3)
+n <- n1+n2+n3
+n1
+n2
+n3
+n
+```
+
+```{r}
+# Variance-covariance matrix for period 1
+S1 <- cov(k1[,1:4])
+# Displays variance-covariance matrix for period 1
+S1
+```
+
+```{r}
+# Variance-covariance matrix for period 2
+S2 <- cov(k2[,1:4])
+# Displays variance-covariance matrix for period 2
+S2
+```
+
+```{r}
+# Pooled variance-covariance matrix
+Sp <- (1/(n1-1 + n2-1))*((n1-1)*S1 + (n2-1)*S2)
+# Displays pooled variance-covariance matrix
+Sp
+```
+
+## 3(c)
+
+Box's M test
+```{r}
+# Population
+g <- 2 
+# Variables
+p <- 4 
+# Calculates and displays M
+M <- ((n1+n2-2)*log(det(Sp))) - (((n1-1)*log(det(S1))) + ((n2-1)*log(det(S2))))
+M
+# Calculates and displays u
+u <- (1/(n1-1) + (1/(n2-1) -1/(n1+n2-2))) * (((2*p**2)+3*p-1)/(6*(p+1)*(g-1)))
+u
+```
+
+```{r}
+# Calculates and displays the test statistic
+TestStat <- (1-u)*M
+TestStat
+# Calculates and displays the critical value
+CritValue <- qchisq(p=1-0.05,df=(1/2)*p*(p+1)*(g-1))
+CritValue
+```
+For H_0: Sum_1 = Sum_2, the critical value is greater than the test statistic, we do not reject H0
+
+## 3(d)
+
+```{r}
+# Column means of each period
+xbar1 <- colMeans(k1[,1:4])
+xbar2 <- colMeans(k2[,1:4])
+xbar1
+xbar2
+# create delta row matrix of zeros
+delta <- c(0,0,0,0)
+delta
+```
+
+```{r}
+# Calculates and displays T^2 value
+T_sq <- t(xbar1-xbar2-delta)%*%solve((1/n1+1/n2)*Sp)%*%(xbar1-xbar2-delta)
+T_sq
+# Calculates and displays critical value
+criticalValue <- (((n1+n2-2)*p)/(n1+n2-p-1))*qf(1-0.05,p, n1+n2-p-1 )
+criticalValue
+```
+
+```{r}
+# Checks which linear combination is most responsible for the rejection
+a <- solve(Sp)%*%(xbar1-xbar2) 
+a
+```
+
+For H0 mu1 - mu2 =0, the critical value is less than the T^2 value, we do reject H0
+
+## 3(e)
+
+Bonferroni SCIs
+```{r}
+t <- qt(1-0.05/(p*g*(g-1)),df=n-g)
+for(i in 1:p){
+  LCI12 <- (xbar1[i]-xbar2[i])-t*sqrt(Sp[i,i]*(1/n1+1/n2))
+  UCI12 <- (xbar1[i]-xbar2[i])+t*sqrt(Sp[i,i]*(1/n1+1/n2))
+  cat("Bon SCI for mu1[",i,"]-mu2[",i,"] = (",LCI12,",",UCI12,")\n",sep="")
+}
+```
+Bon SCI for mu1[1]-mu2[1] = (-8.354074,2.354074)
+Bon SCI for mu1[2]-mu2[2] = (-3.009119,6.809119)
+Bon SCI for mu1[3]-mu2[3] = (-4.470196,6.670196)
+Bon SCI for mu1[4]-mu2[4] = (-1.780992,4.380992)
+
+SCIs
+```{r}
+c_square <- ((n1+n2-2)*p)/(n1+n2-p-1)*qf(1-0.05,df1 = p,df2 = n1+n2-p-1)
+c <- sqrt(c_square)
+for(i in 1:p){
+LCI12 <- (xbar1[i]-xbar2[i])-c*sqrt(Sp[i,i]*(1/n1+1/n2))
+UCI12 <- (xbar1[i]-xbar2[i])+c*sqrt(Sp[i,i]*(1/n1+1/n2))
+cat("SCI for mu1[",i,"]-mu2[",i,"] = (",LCI12,",",UCI12,")\n",sep="")
+}
+```
+SCI for mu1[1]-mu2[1] = (-10.43313,4.43313)
+SCI for mu1[2]-mu2[2] = (-4.915392,8.715392)
+SCI for mu1[3]-mu2[3] = (-6.633174,8.833174)
+SCI for mu1[4]-mu2[4] = (-2.97738,5.57738)
+
+## 4(a)
+
+```{r}
+# Read the data from "t6_17.txt" and sets it to the variable nut
+nut <- read.table("t6_17.txt", header = T)
+# Displays the data
+nut
+```
+
+```{r}
+# Observation vectors
+p <- 3 
+# Levels for factor 1
+g <- 2 
+# Levels for factor 2
+b <- 3 
+# Observations per treatment
+n <- 2 
+```
+
+```{r}
+fac1 <- factor(nut$Fac1)
+fac2 <- factor(nut$Fac2)
+nut345 <- as.matrix(nut[,3:5])
+# Creates the fitted model
+fit <- manova(nut345~fac1*fac2)
+# Simulates the Wilks test
+summary(fit,test = "Wilks")
+```
+For fac1, H0: tau1 = tau2 = 0, the p-value 0.020502 is less than alpha = 0.05, we do reject H0
+
+For fac2, H0: beta1 = beta2 = beta3 = 0, the p-value 0.001928 is less than alpha = 0.05, we do reject H0
+
+For fac1:fac2, H0: gamma11 = gamma12 = gammaab = 0, the p-value 0.050794 is greater than alpha = 0.05, we do not reject H0
+
+## 4(b)
+
+```{r}
+# Sum of squares and cross products matrices for SSPfac1
+moreinfo <- summary(fit)
+SSPfac1 <- moreinfo$SS[1]
+SSPfac1
+```
+
+```{r}
+# Sum of squares and cross products matrices for SSPfac2
+SSPfac2 <- moreinfo$SS[2]
+SSPfac2
+```
+
+```{r}
+# Sum of squares and cross products matrices for SSPint
+SSPint <- moreinfo$SS[[3]]
+SSPint
+```
+
+```{r}
+# Sum of squares and cross products matrices for SSPres
+SSPres <- moreinfo$SS[[4]]
+SSPres
+```
+
+## 4(c)
+
+```{r}
+# Creates the fitted model
+fit2 <- manova(nut345~fac1+fac2)
+moreinfo2 <- summary(fit2)
+```
+
+```{r}
+# Sum of squares and cross products matrices for SSPfac1
+SSPfac1_2 <- moreinfo2$SS[1]
+SSPfac1_2
+```
+
+```{r}
+# Sum of squares and cross products matrices for SSPfac2
+SSPfac2_2 <- moreinfo2$SS[2]
+SSPfac2_2
+```
+
+```{r}
+# Sum of squares and cross products matrices for SSPint
+SSPres_2 <- moreinfo2$SS[3]
+SSPres_2
+```
+
+```{r}
+# SSPres + SSPint from the previouys part
+SSPres+SSPint
+```
+
+What I have observed is that SSPfac1 and SSPfac2 in this part and part b are the same. SSprese is equal to SSPres + SSPint from part with interaction of fac1 and fac2.
